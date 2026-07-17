@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <title>Sculpt Session</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&family=Pinyon+Script&family=GFS+Didot&display=swap" rel="stylesheet">
+  <style id="custom-style">
+    :root {
+      --bg: #120810;
+      --surface: #1c1020;
+      --border: #2a2a30;
+      --text: #e8e8ec;
+      --muted: #5a5a6a;
+      --warmup:  #7c3aed;
+      --glute:   #c84bb5;
+      --back:    #f01f5a;
+      --gsculpt: #c84bb5;
+      --core:    #ff6b8a;
+      --stretch: #7c3aed;
+      --c-title: #c84bb5;
+      --f-title: 'DM Serif Display',Georgia,serif;
+      --f-section: 'DM Serif Display',Georgia,serif;
+      --f-exercise: Palatino,serif;
+      --f-meta: Palatino,serif;
+      --f-done: 'DM Serif Display',Georgia,serif;
+      --f-body: 'Inter',-apple-system,sans-serif;
+      --footer-h: 72px;
+    }
+    html { scroll-padding-top: 120px; }
+    body { background: var(--bg); color: var(--text); font-family: var(--f-body); font-size: 16px; padding-bottom: calc(var(--footer-h) + env(safe-area-inset-bottom) + 16px); padding-top: 0; }
+
+    /* NAV */
+    .top-nav { position: sticky; top: 0; z-index: 100; background: rgba(18,8,16,0.98); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding-top: env(safe-area-inset-top); }
+    .nav-inner { display: flex; align-items: center; padding: 0 16px; height: 44px; gap: 8px; }
+    .nav-tabs { display: flex; background: rgba(255,255,255,0.06); border-radius: 10px; padding: 3px; gap: 2px; flex: 1; }
+    .nav-tab { flex: 1; height: 32px; border: none; border-radius: 8px; background: transparent; color: var(--muted); font-size: 13px; font-weight: 600; font-family: var(--f-body); cursor: pointer; -webkit-appearance: none; transition: all 0.2s; }
+    .nav-tab.active { background: var(--surface); color: var(--text); }
+    .summary-btn { width: 36px; height: 36px; border-radius: 10px; border: 1.5px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text); font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-appearance: none; flex-shrink: 0; }
+    .summary-btn:active { transform: scale(0.94); }
+
+    /* PAGE HEADER */
+    .page-header { position: fixed; top: calc(44px + env(safe-area-inset-top)); left: 0; right: 0; z-index: 90; padding: 10px 20px 8px; text-align: center; background: rgba(18,8,16,0.98); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); pointer-events: none; }
+    .page-header .date { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+    .page-header h1 { font-size: 24px; font-weight: 400; font-family: var(--f-title); color: var(--c-title); }
+
+    /* TABS */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; padding-top: 110px; }
+
+    /* SECTIONS */
+    .section { margin: 16px 16px 0; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: var(--surface); }
+    .section-header { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); position: relative; }
+    .section-title { font-size: 17px; font-weight: 400; font-family: var(--f-section); }
+    .section-subtitle { font-size: 15px; font-style: italic; margin-top: 2px; opacity: 0.75; font-family: var(--f-section); }
+    .section-meta { display: flex; gap: 10px; margin-top: 6px; flex-wrap: wrap; align-items: center; font-family: var(--f-meta); }
+    .section-meta .duration { font-size: 13px; font-weight: 600; color: var(--text); }
+    .section-meta .weight { font-size: 12px; font-weight: 600; }
+    .section-meta .weight u { text-decoration: underline; }
+    .section-target { font-size: 12px; color: var(--muted); margin-top: 4px; font-family: var(--f-meta); font-weight: 400; }
+    .section-target strong { color: var(--text); font-weight: 400; }
+    .block-warmup  .section-title, .block-warmup  .section-subtitle { color: var(--warmup); }
+    .block-glute   .section-title, .block-glute   .section-subtitle, .block-glute .section-meta .weight { color: var(--glute); }
+    .block-back    .section-title, .block-back    .section-subtitle, .block-back  .section-meta .weight { color: var(--back); }
+    .block-gsculpt .section-title, .block-gsculpt .section-subtitle, .block-gsculpt .section-meta .weight { color: var(--gsculpt); }
+    .block-core    .section-title, .block-core    .section-subtitle, .block-core  .section-meta .weight { color: var(--core); }
+    .block-stretch .section-title, .block-stretch .section-subtitle { color: var(--stretch); }
+
+    .checklist { padding: 4px 0; }
+    .item-group-label { font-size: 11px; font-weight: 400; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; padding: 10px 16px 2px; font-family: var(--f-meta); }
+    .set-row { display: flex; flex-direction: column; padding: 11px 16px; border-top: 1px solid var(--border); font-size: 15px; line-height: 1.4; font-family: var(--f-exercise); }
+    .set-row.exercise-row { border-top: none; padding-top: 2px; padding-bottom: 10px; }
+    .set-row.exercise-row .label { color: var(--muted); font-weight: 400; font-size: 14px; }
+    .set-row .detail { font-size: 13px; color: var(--muted); margin-top: 2px; padding-left: 10px; }
+
+    .section-exercises { padding: 0 16px 10px; }
+    .exercise-list { list-style: none; display: flex; flex-direction: column; gap: 6px; font-family: var(--f-exercise); padding-left: 0; margin-top: 10px; }
+    .exercise-list li { font-size: 14px; color: var(--muted); padding-left: 0; line-height: 1.6; list-style: none; display: block; }
+    .exercise-list li::before { content: none; }
+    .exercise-list li .ex-detail { font-size: 13px; color: var(--muted); display: block; margin-top: 2px; padding-left: 12px; }
+
+    .section-done-wrap { padding: 14px 16px; }
+    .section-done-btn { width: 100%; min-height: 52px; border-radius: 12px; border: 1.5px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text); font-size: 17px; font-weight: 400; font-family: var(--f-done); cursor: pointer; -webkit-appearance: none; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .section-done-btn:active { transform: scale(0.98); }
+    .block-glute-done   { border-color: rgba(200,75,181,0.4); color: var(--glute); }
+    .block-back-done    { border-color: rgba(240,31,90,0.4); color: var(--back); }
+    .block-gsculpt-done { border-color: rgba(200,75,181,0.4); color: var(--gsculpt); }
+    .block-core-done    { border-color: rgba(255,107,138,0.4); color: var(--core); }
+    .section-done-btn.done { background: rgba(93,221,136,0.08); border-color: #3a7a50; color: #5ddd88; text-decoration: line-through; opacity: 0.7; }
+    @keyframes completePulse { 0%{background:var(--surface)}40%{background:rgba(200,75,181,0.08)}100%{background:var(--surface)} }
+    .section.complete { animation: completePulse 0.7s ease; }
+
+    /* FOOTER */
+    .footer { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; background: rgba(18,8,16,0.98); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid var(--border); overflow: hidden; }
+    .footer-progress-fill { position: absolute; top: 0; left: 0; bottom: 0; width: 0%; background: linear-gradient(90deg,rgba(124,58,237,0.18),rgba(232,53,122,0.18)); transition: width 0.4s ease; pointer-events: none; }
+    .footer-inner { position: relative; z-index: 1; display: flex; align-items: center; gap: 10px; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); }
+    .stopwatch-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 72px; min-width: 72px; height: 52px; border-radius: 14px; border: 1.5px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text); font-family: var(--f-body); cursor: pointer; -webkit-appearance: none; transition: all 0.2s; gap: 1px; }
+    .stopwatch-btn.running { border-color: #c84bb5; background: rgba(200,75,181,0.1); }
+    .stopwatch-time { font-size: 15px; font-weight: 700; letter-spacing: -0.5px; line-height: 1; }
+    .stopwatch-label { font-size: 9px; font-weight: 600; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+    .stopwatch-btn.running .stopwatch-label { color: #c84bb5; }
+    .footer-divider { width: 1px; height: 36px; background: var(--border); flex-shrink: 0; }
+    .timer-btn { flex: 1; height: 52px; border-radius: 14px; border: 1.5px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text); font-size: 16px; font-weight: 600; font-family: var(--f-body); display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; -webkit-appearance: none; }
+    .timer-btn.running { border-color: #e8357a; background: rgba(232,53,122,0.1); color: #e8357a; }
+    .timer-btn.done { border-color: #5ddd88; background: rgba(93,221,136,0.08); color: #5ddd88; }
+    .progress-pct { font-size: 12px; font-weight: 700; color: var(--muted); min-width: 34px; text-align: center; }
+    .progress-pct.active { color: #e8357a; }
+
+    /* LAYOUT TAB */
+    .layout-panel { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .layout-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+    .layout-card-title { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; padding: 12px 16px 8px; border-bottom: 1px solid var(--border); }
+    .layout-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-top: 1px solid var(--border); }
+    .layout-row:first-of-type { border-top: none; }
+    .layout-row-label { font-size: 14px; color: var(--text); flex: 1; }
+    .color-swatch { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; -webkit-appearance: none; padding: 0; }
+    .save-btn { padding: 14px; border-radius: 14px; border: none; background: var(--glute); color: #fff; font-size: 15px; font-weight: 600; font-family: var(--f-body); width: 100%; cursor: pointer; -webkit-appearance: none; }
+    .reset-btn { padding: 12px; border-radius: 14px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 13px; font-family: var(--f-body); width: 100%; cursor: pointer; -webkit-appearance: none; }
+
+    /* ROUTINE EDITOR */
+    .routine-panel { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+    .r-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+    .r-card-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .r-card-title { font-size: 15px; font-weight: 600; font-family: var(--f-section); }
+    .r-lines { padding: 4px 0; }
+    .r-line { display: flex; align-items: center; gap: 8px; padding: 6px 16px; }
+    .r-line-input { flex: 1; background: transparent; border: none; color: var(--text); font-size: 14px; font-family: var(--f-exercise); -webkit-appearance: none; }
+    .r-line-input:focus { outline: none; }
+    .r-del { width: 28px; height: 28px; border-radius: 8px; border: 1px solid rgba(232,53,122,0.3); background: rgba(232,53,122,0.08); color: #e8357a; font-size: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; -webkit-appearance: none; }
+    .r-line-wrap { display: flex; flex-direction: column; border-top: 1px solid var(--border); }
+    .r-line-wrap:first-child { border-top: none; }
+    .r-line-wrap .r-line { border-top: none; padding-bottom: 4px; }
+    .r-line-detail-row { padding-top: 0; padding-bottom: 10px; }
+    .r-line-detail { color: var(--muted) !important; font-size: 13px !important; padding-left: 8px; }
+    .r-add { margin: 8px 16px 12px; padding: 10px; border-radius: 10px; border: 1.5px dashed var(--border); background: transparent; color: var(--muted); font-size: 13px; font-family: var(--f-body); width: calc(100% - 32px); cursor: pointer; -webkit-appearance: none; text-align: center; }
+    .r-sets-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--border); }
+    .r-sets-label { font-size: 13px; color: var(--muted); font-family: var(--f-body); }
+    .r-sets-control { display: flex; align-items: center; gap: 12px; }
+    .r-sets-btn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--text); font-size: 18px; font-weight: 300; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-appearance: none; line-height: 1; }
+    .r-sets-btn:active { background: rgba(255,255,255,0.1); }
+    .r-sets-count { font-size: 15px; font-weight: 600; color: var(--text); min-width: 20px; text-align: center; font-family: var(--f-body); }
+    .r-save { margin: 0 16px 14px; padding: 12px; border-radius: 12px; border: none; background: #3a7a50; color: #fff; font-size: 14px; font-weight: 600; font-family: var(--f-body); width: calc(100% - 32px); cursor: pointer; -webkit-appearance: none; }
+
+    /* WEIGHT EDIT */
+    .edit-weight-btn { position: absolute; top: 14px; right: 14px; display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; font-family: var(--f-body); color: var(--muted); background: transparent; border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer; -webkit-appearance: none; }
+    .edit-weight-btn:active { opacity: 0.7; }
+    .weight-muted { opacity: 0.5; }
+    .weight-edit-sheet { display: none; margin: 0 16px; border: 1px solid var(--border); border-top: none; border-radius: 0 0 12px 12px; background: rgba(255,255,255,0.03); padding: 14px 16px; }
+    .weight-edit-sheet.open { display: block; }
+    .weight-exercise-selector { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+    .weight-ex-option { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text); font-size: 13px; font-family: var(--f-exercise); cursor: pointer; -webkit-appearance: none; text-align: left; width: 100%; }
+    .weight-ex-option.selected { border-color: rgba(200,75,181,0.5); background: rgba(200,75,181,0.06); }
+    .weight-ex-dot { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--muted); flex-shrink: 0; }
+    .weight-ex-option.selected .weight-ex-dot { background: #c84bb5; border-color: #c84bb5; }
+    .weight-set-inputs { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+    .weight-set-row { display: flex; align-items: center; gap: 10px; }
+    .weight-set-label { font-size: 12px; color: var(--muted); font-family: var(--f-body); min-width: 42px; }
+    .weight-set-input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; font-family: var(--f-body); padding: 8px 10px; -webkit-appearance: none; }
+    .weight-set-input:focus { outline: none; border-color: rgba(200,75,181,0.5); }
+    .weight-save-btn { width: 100%; padding: 10px; border-radius: 10px; border: none; background: #c84bb5; color: #fff; font-size: 14px; font-weight: 600; font-family: var(--f-body); cursor: pointer; -webkit-appearance: none; }
+    .weight-updated-line { font-size: 11px; color: rgba(255,255,255,0.35); font-family: var(--f-body); padding: 6px 16px 10px; font-style: italic; display: none; }
+
+    /* SUMMARY */
+    .summary-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; align-items: center; justify-content: center; }
+    .summary-overlay.open { display: flex; }
+    .summary-sheet { background: #120810; border-radius: 18px; padding: 16px 18px; width: calc(100% - 32px); max-width: 360px; max-height: 88vh; overflow-y: auto; }
+    .summary-handle { width: 28px; height: 3px; background: rgba(255,255,255,0.12); border-radius: 2px; margin: 0 auto 10px; }
+    .summary-title { font-size: 11px; font-weight: 400; color: #fff; font-family: -apple-system,sans-serif; margin-bottom: 1px; }
+    .summary-date { font-size: 8px; color: rgba(255,255,255,0.35); margin-bottom: 10px; font-family: -apple-system,sans-serif; }
+    .summary-block { margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .summary-block:last-child { border-bottom: none; margin-bottom: 0; }
+    .summary-block-title { font-size: 10px; font-weight: 600; color: #fff; margin-bottom: 1px; font-family: -apple-system,sans-serif; }
+    .summary-block-exercises { font-size: 9px; color: rgba(255,255,255,0.9); line-height: 1.4; font-family: -apple-system,sans-serif; }
+    .summary-block-meta { font-size: 8px; color: rgba(255,255,255,0.3); margin-top: 1px; font-family: -apple-system,sans-serif; }
+    .summary-close { margin-top: 10px; width: 100%; padding: 8px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: #fff; font-size: 11px; font-weight: 600; font-family: -apple-system,sans-serif; cursor: pointer; -webkit-appearance: none; }
+
+    /* TOAST */
+    .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: #2a5c3a; color: #5ddd88; padding: 10px 22px; border-radius: 20px; font-size: 14px; font-weight: 600; z-index: 999; pointer-events: none; opacity: 1; transition: opacity 0.3s; }
+  </style>
+</head>
+<body>
+
+<!-- WELCOME SCREEN -->
+<div id="welcomeScreen" onclick="dismissWelcome()" style="position:fixed;inset:0;z-index:999;background:#120810;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:opacity 0.8s ease;">
+  <div style="text-align:center;padding:0 40px;">
+    <div style="font-size:24px;color:rgba(255,255,255,0.35);font-family:'GFS Didot',serif;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;">WELCOME,</div>
+    <div style="font-size:74px;font-weight:400;font-family:'Pinyon Script',cursive;color:#c84bb5;line-height:1.1;margin-bottom:8px;">Ella</div>
+    <div style="font-size:24px;font-family:'GFS Didot',serif;color:rgba(255,255,255,0.35);letter-spacing:0.12em;text-transform:uppercase;">TIME TO SCULPT</div>
+  </div>
+  <div style="position:absolute;bottom:calc(40px + env(safe-area-inset-bottom));font-size:11px;color:rgba(255,255,255,0.15);font-family:-apple-system,sans-serif;letter-spacing:0.06em;">tap to begin</div>
+</div>
+
+<!-- NAV -->
+<div class="top-nav">
+  <div class="nav-inner">
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="switchTab('tab-routine',this)">Routine</button>
+      <button class="nav-tab" onclick="switchTab('tab-layout',this)">Layout</button>
+      <button class="nav-tab" onclick="switchTab('tab-edit',this)">Edit Routine</button>
+    </div>
+    <button class="summary-btn" onclick="openSummary()">📋</button>
+  </div>
+</div>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="date" id="todayDate"></div>
+  <h1>Sculpt Session 🩰🌸</h1>
+</div>
+
+<!-- ROUTINE TAB -->
+<div class="tab-panel active" id="tab-routine">
+
+  <!-- WARM-UP -->
+  <div class="section block-warmup" id="section-warmup">
+    <div class="section-header">
+      <div class="section-title">Warm-Up</div>
+      <div class="section-subtitle">Mobility + Activation</div>
+      <div class="section-meta"><span class="duration">10–12 min</span></div>
+      <div class="section-target"><strong>Targets:</strong> hips, glutes, shoulders, full-body prep</div>
+    </div>
+    <div class="section-exercises">
+      <ul class="exercise-list" id="view-warmup">
+        <li>· Arm / Shoulder Circles<span class="ex-detail">5 forward + 5 back</span></li>
+        <li>· Single Leg Supine Hamstring Stretch<span class="ex-detail">20 reps — right / left</span></li>
+        <li>· Single Leg Raises on Back<span class="ex-detail">10 reps — right / left</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- GLUTE STRENGTH -->
+  <div class="section block-glute" id="section-glute">
+    <div class="section-header">
+      <div class="section-title">Glute Strength Block</div>
+      <div class="section-subtitle">Primary Lift</div>
+      <div class="section-meta"><span class="duration">8 min</span><span class="weight">Weight: 1× <u class="weight-muted">10 lb</u></span></div>
+      <div class="section-target"><strong>Targets:</strong> glute max (lift, roundness, "shelf")</div>
+      <button class="edit-weight-btn" onclick="openWeightEdit('section-glute')">✏️ Edit Weight</button>
+    </div>
+    <div class="checklist" id="view-glute">
+      <div class="item-group-label">Repeat 2× each leg</div>
+      <div class="set-row exercise-row"><span class="label">· Single Leg Hip Thrusts</span><span class="detail">2×10 reps + 10 lb</span></div>
+    </div>
+    <div class="weight-updated-line" id="weight-updated-glute"></div>
+    <div class="weight-edit-sheet" id="weight-sheet-section-glute"></div>
+    <div class="section-done-wrap">
+      <button class="section-done-btn block-glute-done" onclick="sectionDone(this,'section-glute')"><span class="done-icon">○</span><span class="done-label">Mark Done</span></button>
+    </div>
+  </div>
+
+  <!-- BACK & SHOULDERS -->
+  <div class="section block-back" id="section-back">
+    <div class="section-header">
+      <div class="section-title">Back &amp; Shoulders Sculpt</div>
+      <div class="section-subtitle">Definition + Posture</div>
+      <div class="section-meta"><span class="duration">7 min</span><span class="weight">Weight: 2× <u class="weight-muted">10 lb</u>, 2× <u class="weight-muted">5 lb</u></span></div>
+      <div class="section-target"><strong>Targets:</strong> upper back, rear delts, rhomboids, mid traps, posture, shoulder definition</div>
+      <button class="edit-weight-btn" onclick="openWeightEdit('section-back')">✏️ Edit Weight</button>
+    </div>
+    <div class="checklist" id="view-back">
+      <div class="item-group-label">Repeat 2×</div>
+      <div class="set-row exercise-row"><span class="label">· Chest-Supported Dumbbell Row</span><span class="detail">10 reps + 2× 10 lb</span></div>
+      <div class="set-row exercise-row"><span class="label">· Prone Rear Delt Fly</span><span class="detail">10 reps + 2× 5 lb</span></div>
+      <div class="set-row exercise-row"><span class="label">· Newspaper</span><span class="detail">10 reps + 2× 10 lb</span></div>
+    </div>
+    <div class="weight-updated-line" id="weight-updated-back"></div>
+    <div class="weight-edit-sheet" id="weight-sheet-section-back"></div>
+    <div class="section-done-wrap">
+      <button class="section-done-btn block-back-done" onclick="sectionDone(this,'section-back')"><span class="done-icon">○</span><span class="done-label">Mark Done</span></button>
+    </div>
+  </div>
+
+  <!-- GLUTE SCULPT -->
+  <div class="section block-gsculpt" id="section-gsculpt">
+    <div class="section-header">
+      <div class="section-title">Glute Sculpt Circuit</div>
+      <div class="section-subtitle">Volume + Shape</div>
+      <div class="section-meta"><span class="duration">15 min</span><span class="weight">Weight: 2× <u class="weight-muted">20 lb</u>, 1× <u class="weight-muted">25 lb</u></span></div>
+      <div class="section-target"><strong>Targets:</strong> glute med, glute max, outer glute curve</div>
+      <button class="edit-weight-btn" onclick="openWeightEdit('section-gsculpt')">✏️ Edit Weight</button>
+    </div>
+    <div class="checklist" id="view-gsculpt">
+      <div class="item-group-label">Repeat 2×</div>
+      <div class="set-row exercise-row"><span class="label">· Single Leg Romanian Dead Lift</span><span class="detail">2×10 reps + 25 lb</span></div>
+      <div class="set-row exercise-row"><span class="label">· Lunges</span><span class="detail">2×10 reps + 2× 20 lb</span></div>
+    </div>
+    <div class="weight-updated-line" id="weight-updated-gsculpt"></div>
+    <div class="weight-edit-sheet" id="weight-sheet-section-gsculpt"></div>
+    <div class="section-done-wrap">
+      <button class="section-done-btn block-gsculpt-done" onclick="sectionDone(this,'section-gsculpt')"><span class="done-icon">○</span><span class="done-label">Mark Done</span></button>
+    </div>
+  </div>
+
+  <!-- CORE -->
+  <div class="section block-core" id="section-core">
+    <div class="section-header">
+      <div class="section-title">Core Sculpt Circuit</div>
+      <div class="section-subtitle">Obliques + Waist</div>
+      <div class="section-meta"><span class="duration">10 min</span><span class="weight">Weight: 1× <u class="weight-muted">15 lb</u>, ball</span></div>
+      <div class="section-target"><strong>Targets:</strong> obliques, deep core, rotational strength</div>
+      <button class="edit-weight-btn" onclick="openWeightEdit('section-core')">✏️ Edit Weight</button>
+    </div>
+    <div class="checklist" id="view-core">
+      <div class="item-group-label">Repeat 2×</div>
+      <div class="set-row exercise-row"><span class="label">· Side Plank Hip Dips</span><span class="detail">30s + 15 lb</span></div>
+      <div class="set-row exercise-row"><span class="label">· Double Toe Taps &amp; Toe Extension</span><span class="detail">10 reps + 15 lb + ball</span></div>
+      <div class="set-row exercise-row"><span class="label">· Hip Rock &amp; Raise</span><span class="detail">10 reps</span></div>
+    </div>
+    <div class="weight-updated-line" id="weight-updated-core"></div>
+    <div class="weight-edit-sheet" id="weight-sheet-section-core"></div>
+    <div class="section-done-wrap">
+      <button class="section-done-btn block-core-done" onclick="sectionDone(this,'section-core')"><span class="done-icon">○</span><span class="done-label">Mark Done</span></button>
+    </div>
+  </div>
+
+  <!-- STRETCH -->
+  <div class="section block-stretch" id="section-stretch">
+    <div class="section-header">
+      <div class="section-title">Post-Workout Stretch</div>
+      <div class="section-subtitle">Cool Down</div>
+      <div class="section-meta"><span class="duration">10 min</span></div>
+      <div class="section-target">Targets: lengthen everything, stay flexible, feel expensive</div>
+    </div>
+    <div class="section-exercises">
+      <ul class="exercise-list" id="view-stretch">
+        <li>· Child's Pose</li>
+        <li>· Arm Stretches</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- LAYOUT TAB -->
+<div class="tab-panel" id="tab-layout">
+  <div class="layout-panel">
+    <div class="layout-card">
+      <div class="layout-card-title">Colors</div>
+      <div class="layout-row"><span class="layout-row-label">Page Title</span><input type="color" class="color-swatch" id="lc-title" value="#c84bb5" oninput="previewColor('--c-title',this.value)"></div>
+      <div class="layout-row"><span class="layout-row-label">Warm-Up</span><input type="color" class="color-swatch" id="lc-warmup" value="#7c3aed" oninput="previewColor('--warmup',this.value)"></div>
+      <div class="layout-row"><span class="layout-row-label">Glute Strength</span><input type="color" class="color-swatch" id="lc-glute" value="#c84bb5" oninput="previewColor('--glute',this.value)"></div>
+      <div class="layout-row"><span class="layout-row-label">Back &amp; Shoulders</span><input type="color" class="color-swatch" id="lc-back" value="#f01f5a" oninput="previewColor('--back',this.value)"></div>
+      <div class="layout-row"><span class="layout-row-label">Glute Sculpt</span><input type="color" class="color-swatch" id="lc-gsculpt" value="#c84bb5" oninput="previewColor('--gsculpt',this.value)"></div>
+      <div class="layout-row"><span class="layout-row-label">Core</span><input type="color" class="color-swatch" id="lc-core" value="#ff6b8a" oninput="previewColor('--core',this.value)"></div>
+      <div class="layout-row"><span class="layout-row-label">Stretch</span><input type="color" class="color-swatch" id="lc-stretch" value="#7c3aed" oninput="previewColor('--stretch',this.value)"></div>
+    </div>
+    <button class="save-btn" onclick="saveLayout()">💾 Save Layout — Download Updated File</button>
+    <button class="reset-btn" onclick="resetLayout()">Reset to Defaults</button>
+  </div>
+</div>
+
+<!-- EDIT ROUTINE TAB -->
+<div class="tab-panel" id="tab-edit">
+  <div style="padding:16px 16px 0;">
+    <button class="r-save" style="width:100%;margin:0;" onclick="saveAllRoutines()">💾 Save &amp; Download Updated File</button>
+  </div>
+  <div class="routine-panel" id="routineEditor"></div>
+</div>
+
+<!-- SUMMARY -->
+<div class="summary-overlay" id="summaryOverlay" onclick="closeSummaryBg(event)">
+  <div class="summary-sheet">
+    <div class="summary-handle"></div>
+    <div class="summary-title">Sculpt Session 🩰🌸</div>
+    <div class="summary-date" id="summaryDate"></div>
+    <div id="summaryBody"></div>
+    <button class="summary-close" onclick="closeSummary()">Close</button>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="footer-progress-fill" id="footerFill"></div>
+  <div class="footer-inner">
+    <button class="stopwatch-btn" id="stopwatchBtn" onclick="toggleStopwatch()">
+      <span class="stopwatch-time" id="swTime">0:00</span>
+      <span class="stopwatch-label" id="swLabel">start</span>
+    </button>
+    <div class="footer-divider"></div>
+    <span class="progress-pct" id="progressPct">0%</span>
+    <div class="footer-divider"></div>
+    <button class="timer-btn" id="timer30" onclick="startTimer(30,'timer30')"><span>⏱</span><span id="timer30-label">30s</span></button>
+    <button class="timer-btn" id="timer60" onclick="startTimer(60,'timer60')"><span>⏱</span><span id="timer60-label">60s</span></button>
+  </div>
+</div>
+
+<script>
+const CONFIG = {
+  fonts: {
+    '--f-title':    "'DM Serif Display',Georgia,serif",
+    '--f-section':  "'DM Serif Display',Georgia,serif",
+    '--f-exercise': "Palatino,serif",
+    '--f-meta':     "Palatino,serif",
+    '--f-done':     "'DM Serif Display',Georgia,serif"
+  },
+  colors: {
+    '--c-title': '#c84bb5',
+    '--warmup':  '#7c3aed',
+    '--glute':   '#c84bb5',
+    '--back':    '#f01f5a',
+    '--gsculpt': '#c84bb5',
+    '--core':    '#ff6b8a',
+    '--stretch': '#7c3aed'
+  },
+  sets: {
+    warmup:  '',
+    glute:   'Repeat 2× each leg',
+    back:    'Repeat 2×',
+    gsculpt: 'Repeat 2×',
+    core:    'Repeat 2×',
+    stretch: ''
+  },
+  exercises: {
+    warmup:  ['Arm / Shoulder Circles|5 forward + 5 back','Single Leg Supine Hamstring Stretch|20 reps — right / left','Single Leg Raises on Back|10 reps — right / left'],
+    glute:   ['· Single Leg Hip Thrusts|2×10 reps + 10 lb'],
+    back:    ['· Chest-Supported Dumbbell Row|10 reps + 2× 10 lb','· Prone Rear Delt Fly|10 reps + 2× 5 lb','· Newspaper|10 reps + 2× 10 lb'],
+    gsculpt: ['· Single Leg Romanian Dead Lift|2×10 reps + 25 lb','· Lunges|2×10 reps + 2× 20 lb'],
+    core:    ['· Side Plank Hip Dips|30s + 15 lb','· Double Toe Taps & Toe Extension|10 reps + 15 lb + ball','· Hip Rock & Raise|10 reps'],
+    stretch: ["Child's Pose",'Arm Stretches']
+  }
+};
+
+// ── Welcome ──
+function dismissWelcome() {
+  const el = document.getElementById('welcomeScreen');
+  if (!el) return;
+  el.style.opacity = '0';
+  setTimeout(() => el.remove(), 800);
+}
+setTimeout(dismissWelcome, 4000);
+
+// ── Config apply ──
+Object.entries(CONFIG.fonts).forEach(([k,v]) => document.documentElement.style.setProperty(k,v));
+Object.entries(CONFIG.colors).forEach(([k,v]) => document.documentElement.style.setProperty(k,v));
+
+const colorPickerMap = {'--c-title':'lc-title','--warmup':'lc-warmup','--glute':'lc-glute','--back':'lc-back','--gsculpt':'lc-gsculpt','--core':'lc-core','--stretch':'lc-stretch'};
+Object.entries(colorPickerMap).forEach(([varName,elId]) => { const el=document.getElementById(elId); if(el&&CONFIG.colors[varName]) el.value=CONFIG.colors[varName]; });
+
+// ── Date ──
+const d = new Date();
+const dateStr = d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+document.getElementById('todayDate').textContent = dateStr;
+
+// ── Tabs ──
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── Section timing ──
+const sectionOrder = ['section-warmup','section-glute','section-back','section-gsculpt','section-core','section-stretch'];
+const sectionInfo = {
+  'section-warmup':  {name:'Warm-Up',             colorVar:'--warmup'},
+  'section-glute':   {name:'Glute Strength Block', colorVar:'--glute'},
+  'section-back':    {name:'Back & Shoulders',     colorVar:'--back'},
+  'section-gsculpt': {name:'Glute Sculpt Circuit', colorVar:'--gsculpt'},
+  'section-core':    {name:'Core Sculpt Circuit',  colorVar:'--core'},
+  'section-stretch': {name:'Post-Workout Stretch', colorVar:'--stretch'}
+};
+const sectionStartTimes = {'section-warmup': Date.now()};
+const sectionDurations = {};
+
+function sectionDone(btn, sectionId) {
+  const isDone = btn.classList.toggle('done');
+  btn.querySelector('.done-icon').textContent  = isDone ? '✓' : '○';
+  btn.querySelector('.done-label').textContent = isDone ? 'Done' : 'Mark Done';
+  const section = document.getElementById(sectionId);
+  if (isDone) {
+    section.classList.remove('complete'); void section.offsetWidth; section.classList.add('complete');
+    const now = Date.now();
+    sectionDurations[sectionId] = Math.round((now - (sectionStartTimes[sectionId] || now)) / 1000);
+    const idx = sectionOrder.indexOf(sectionId);
+    if (idx >= 0 && idx + 1 < sectionOrder.length) {
+      const next = sectionOrder[idx + 1];
+      if (!sectionStartTimes[next]) sectionStartTimes[next] = now;
+    }
+  } else {
+    section.classList.remove('complete');
+    delete sectionDurations[sectionId];
+  }
+  updateProgress();
+}
+
+function updateProgress() {
+  const all  = document.querySelectorAll('.section-done-btn').length;
+  const done = document.querySelectorAll('.section-done-btn.done').length;
+  const pct  = all ? Math.round((done/all)*100) : 0;
+  document.getElementById('footerFill').style.width = pct + '%';
+  const lbl = document.getElementById('progressPct');
+  lbl.textContent = pct + '%';
+  lbl.classList.toggle('active', pct > 0);
+}
+
+function fmtDur(s) {
+  if (!s) return '—';
+  return Math.floor(s/60) + 'm ' + (s%60) + 's';
+}
+
+// ── Summary ──
+const weightOverrides = {};
+
+function openSummary() {
+  document.getElementById('summaryDate').textContent = dateStr;
+  const body = document.getElementById('summaryBody');
+  body.innerHTML = '';
+  const totalSec = swRunning ? Math.floor((Date.now()-swStart)/1000) : Math.floor(swElapsed/1000);
+  const totalDiv = document.createElement('div');
+  totalDiv.style.cssText = 'font-size:10px;color:rgba(255,255,255,0.5);font-family:-apple-system,sans-serif;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.1);';
+  totalDiv.innerHTML = `Total time: <span style="color:#fff;font-weight:600;">${totalSec>0?fmtDur(totalSec):'—'}</span>`;
+  body.appendChild(totalDiv);
+  sectionOrder.forEach(id => {
+    const info  = sectionInfo[id];
+    const done  = document.querySelector('#'+id+' .section-done-btn')?.classList.contains('done');
+    const color = getComputedStyle(document.documentElement).getPropertyValue(info.colorVar).trim();
+    const key   = id.replace('section-','');
+    const lines = (CONFIG.exercises[key]||[]).map(e => {
+      const parts = e.split('|');
+      const name = parts[0].replace(/^·\s*/,'').trim();
+      const detail = parts[1]||'';
+      const override = weightOverrides[id]&&weightOverrides[id][name];
+      // Extract reps portion from detail (everything before the weight)
+      const repsMatch = detail.match(/^([^+]*\d+[^\d+]*?)(?:\+|$)/);
+      const repsPart = repsMatch ? repsMatch[1].trim() : '';
+      const detailStr = override
+        ? override.map((v,i) => `Set ${i+1}: ${repsPart ? repsPart + ' + ' : ''}${v}`).join(' · ')
+        : detail;
+      return `<span style="color:#fff;">·</span> ${name}${detailStr?' — '+detailStr:''}`;
+    }).join('<br>');
+    const block = document.createElement('div');
+    block.className = 'summary-block';
+    const timeStr = sectionDurations[id] ? `Time: ${fmtDur(sectionDurations[id])}` : '';
+    const setsStr = CONFIG.sets&&CONFIG.sets[key] ? `<div class="summary-block-meta" style="color:rgba(255,255,255,0.45);margin-bottom:2px;">${CONFIG.sets[key]}</div>` : '';
+    block.innerHTML = `
+      <div class="summary-block-title"><span style="color:${done?color:'#fff'}">${done?'✓':'○'}</span> ${info.name}</div>
+      ${setsStr}
+      <div class="summary-block-exercises">${lines||'—'}</div>
+      ${timeStr?`<div class="summary-block-meta">${timeStr}</div>`:''}`;
+    body.appendChild(block);
+  });
+  document.getElementById('summaryOverlay').classList.add('open');
+}
+function closeSummary()    { document.getElementById('summaryOverlay').classList.remove('open'); }
+function closeSummaryBg(e) { if(e.target===document.getElementById('summaryOverlay')) closeSummary(); }
+
+// ── Stopwatch ──
+let swRunning=false, swElapsed=0, swStart=null, swInterval=null;
+function toggleStopwatch() {
+  if (!swRunning) {
+    swStart=Date.now()-swElapsed; swRunning=true;
+    document.getElementById('stopwatchBtn').classList.add('running');
+    document.getElementById('swLabel').textContent='pause';
+    swInterval=setInterval(tickSw,500);
+  } else {
+    swElapsed=Date.now()-swStart; swRunning=false;
+    clearInterval(swInterval);
+    document.getElementById('stopwatchBtn').classList.remove('running');
+    document.getElementById('swLabel').textContent='resume';
+  }
+}
+function tickSw() {
+  const t=Math.floor((Date.now()-swStart)/1000);
+  document.getElementById('swTime').textContent=Math.floor(t/60)+':'+String(t%60).padStart(2,'0');
+}
+
+// ── Rest timers ──
+const timerState={};
+function startTimer(sec,id) {
+  const btn=document.getElementById(id), lbl=document.getElementById(id+'-label'), def=sec+'s';
+  if(timerState[id]){ clearInterval(timerState[id]); delete timerState[id]; btn.classList.remove('running','done'); lbl.textContent=def; stopVibrating(); return; }
+  if(btn.classList.contains('done')){ btn.classList.remove('done'); lbl.textContent=def; stopVibrating(); return; }
+  let rem=sec; btn.classList.add('running'); btn.classList.remove('done'); lbl.textContent=rem+'s';
+  timerState[id]=setInterval(()=>{
+    rem--;
+    if(rem<=0){ clearInterval(timerState[id]); delete timerState[id]; btn.classList.remove('running'); btn.classList.add('done'); lbl.textContent='✓ tap to stop'; startVibrating(); }
+    else lbl.textContent=rem+'s';
+  },1000);
+}
+
+// ── Vibration ──
+let vibrateInterval=null;
+function startVibrating() {
+  if(!navigator.vibrate) return;
+  navigator.vibrate([400,200,400,200,400]);
+  vibrateInterval=setInterval(()=>navigator.vibrate([400,200,400,200,400]),1800);
+}
+function stopVibrating() {
+  if(vibrateInterval){ clearInterval(vibrateInterval); vibrateInterval=null; }
+  if(navigator.vibrate) navigator.vibrate(0);
+}
+
+// ── Weight Edit ──
+function openWeightEdit(sectionId) {
+  const sheet=document.getElementById('weight-sheet-'+sectionId);
+  if(sheet.classList.contains('open')){ sheet.classList.remove('open'); return; }
+  document.querySelectorAll('.weight-edit-sheet.open').forEach(s=>s.classList.remove('open'));
+  const key=sectionId.replace('section-','');
+  const exercises=(CONFIG.exercises[key]||[]).filter(e=>e.includes(' lb'));
+  if(!exercises.length) return;
+  const label=document.querySelector('#view-'+key+' .item-group-label');
+  const setMatch=label?label.textContent.match(/(\d+)/):null;
+  const setCount=setMatch?parseInt(setMatch[1]):2;
+  sheet.innerHTML='';
+  let selectedEx=exercises[0];
+  if(exercises.length>1) {
+    const selector=document.createElement('div');
+    selector.className='weight-exercise-selector';
+    exercises.forEach((ex,i)=>{
+      const name=ex.split('|')[0].replace(/^·\s*/,'').trim();
+      const btn=document.createElement('button');
+      btn.className='weight-ex-option'+(i===0?' selected':'');
+      btn.innerHTML=`<span class="weight-ex-dot"></span>${name}`;
+      btn.onclick=()=>{ selector.querySelectorAll('.weight-ex-option').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); selectedEx=ex; renderSetInputs(sectionId,ex,setCount,inputsWrap); };
+      selector.appendChild(btn);
+    });
+    sheet.appendChild(selector);
+  }
+  const inputsWrap=document.createElement('div');
+  inputsWrap.className='weight-set-inputs';
+  sheet.appendChild(inputsWrap);
+  renderSetInputs(sectionId,selectedEx,setCount,inputsWrap);
+  const saveBtn=document.createElement('button');
+  saveBtn.className='weight-save-btn'; saveBtn.textContent='Save';
+  saveBtn.onclick=()=>saveWeightEdit(sectionId,inputsWrap,()=>selectedEx);
+  sheet.appendChild(saveBtn);
+  sheet.classList.add('open');
+}
+
+function renderSetInputs(sectionId,ex,setCount,wrap) {
+  wrap.innerHTML='';
+  const parts=ex.split('|'), detail=parts[1]||'';
+  const name=parts[0].replace(/^·\s*/,'').trim();
+  const weightMatch=detail.match(/[\d.]+\s*lb/);
+  const saved=weightOverrides[sectionId]&&weightOverrides[sectionId][name];
+  for(let i=0;i<setCount;i++){
+    const row=document.createElement('div'); row.className='weight-set-row';
+    const lbl=document.createElement('span'); lbl.className='weight-set-label'; lbl.textContent='Set '+(i+1);
+    const input=document.createElement('input');
+    input.type='number'; input.inputMode='decimal'; input.className='weight-set-input';
+    input.placeholder=weightMatch?weightMatch[0].replace(' lb','').trim():'0';
+    input.value=saved?(saved[i]||'').replace(/\s*lb\s*$/i,''):'';
+    row.appendChild(lbl); row.appendChild(input); wrap.appendChild(row);
+  }
+}
+
+function saveWeightEdit(sectionId,inputsWrap,getEx) {
+  const ex=getEx(), key=sectionId.replace('section-','');
+  const parts=ex.split('|'), name=parts[0].replace(/^·\s*/,'').trim(), detail=parts[1]||'';
+  const weightMatch=detail.match(/[\d.]+\s*lb/), defaultWeight=weightMatch?weightMatch[0]:'';
+  const inputs=inputsWrap.querySelectorAll('.weight-set-input');
+  const values=Array.from(inputs).map(i=>{ const v=i.value.trim(); if(!v) return defaultWeight||'—'; return v.toLowerCase().includes('lb')?v:v+' lb'; });
+  if(!weightOverrides[sectionId]) weightOverrides[sectionId]={};
+  weightOverrides[sectionId][name]=values;
+  const rows=document.querySelectorAll('#view-'+key+' .set-row.exercise-row');
+  rows.forEach(row=>{
+    const labelEl=row.querySelector('.label');
+    if(labelEl&&labelEl.textContent.includes(name)){
+      const existing=row.nextElementSibling;
+      if(existing&&existing.classList.contains('weight-updated-inline')) existing.remove();
+      const block=document.createElement('div');
+      block.className='weight-updated-inline';
+      block.style.cssText='font-size:11px;color:rgba(255,255,255,0.35);font-family:var(--f-body);padding:2px 16px 10px;font-style:italic;line-height:1.8;';
+      block.innerHTML='✦ Weight updated:<br>'+values.map((v,i)=>`&nbsp;&nbsp;Set ${i+1}: ${v}`).join('<br>');
+      row.parentNode.insertBefore(block,row.nextSibling);
+    }
+  });
+  const sectionLine=document.getElementById('weight-updated-'+key);
+  if(sectionLine) sectionLine.style.display='none';
+  document.getElementById('weight-sheet-'+sectionId).classList.remove('open');
+}
+
+// ── Layout ──
+function previewColor(varName,val) { document.documentElement.style.setProperty(varName,val); }
+function resetLayout() { if(!confirm('Reset all layout changes?')) return; location.reload(); }
+function saveLayout() {
+  Object.entries(colorPickerMap).forEach(([varName,elId])=>{ const el=document.getElementById(elId); if(el) CONFIG.colors[varName]=el.value; });
+  downloadFile();
+}
+
+// ── Editor ──
+const editorSections=[
+  {key:'warmup', label:'Warm-Up'},
+  {key:'glute',  label:'Glute Strength Block'},
+  {key:'back',   label:'Back & Shoulders'},
+  {key:'gsculpt',label:'Glute Sculpt Circuit'},
+  {key:'core',   label:'Core Sculpt Circuit'},
+  {key:'stretch',label:'Post-Workout Stretch'}
+];
+
+function buildEditor() {
+  const panel=document.getElementById('routineEditor');
+  if(!panel) return;
+  panel.innerHTML='';
+  editorSections.forEach(sec=>{
+    const card=document.createElement('div'); card.className='r-card'; card.dataset.key=sec.key;
+    const header=document.createElement('div'); header.className='r-card-header';
+    header.innerHTML=`<div class="r-card-title">${sec.label}</div>`; card.appendChild(header);
+    if(CONFIG.sets&&CONFIG.sets[sec.key]){
+      const setsMatch=CONFIG.sets[sec.key].match(/(\d+)/);
+      const setsCount=setsMatch?parseInt(setsMatch[1]):2;
+      const setsRow=document.createElement('div'); setsRow.className='r-sets-row';
+      const setsLabel=document.createElement('span'); setsLabel.className='r-sets-label'; setsLabel.textContent='Number of sets';
+      const ctrl=document.createElement('div'); ctrl.className='r-sets-control';
+      const minBtn=document.createElement('button'); minBtn.className='r-sets-btn'; minBtn.textContent='−';
+      const countEl=document.createElement('span'); countEl.className='r-sets-count'; countEl.dataset.key=sec.key; countEl.textContent=setsCount;
+      const plusBtn=document.createElement('button'); plusBtn.className='r-sets-btn'; plusBtn.textContent='+';
+      minBtn.onclick=()=>{ const c=parseInt(countEl.textContent); if(c>1) countEl.textContent=c-1; };
+      plusBtn.onclick=()=>{ countEl.textContent=parseInt(countEl.textContent)+1; };
+      ctrl.appendChild(minBtn); ctrl.appendChild(countEl); ctrl.appendChild(plusBtn);
+      setsRow.appendChild(setsLabel); setsRow.appendChild(ctrl); card.appendChild(setsRow);
+    }
+    const linesDiv=document.createElement('div'); linesDiv.className='r-lines'; linesDiv.dataset.key=sec.key;
+    (CONFIG.exercises[sec.key]||[]).forEach(ex=>linesDiv.appendChild(makeEditorLine(ex)));
+    card.appendChild(linesDiv);
+    const addBtn=document.createElement('button'); addBtn.className='r-add'; addBtn.textContent='+ Add exercise line';
+    addBtn.onclick=()=>linesDiv.appendChild(makeEditorLine('')); card.appendChild(addBtn);
+    panel.appendChild(card);
+  });
+}
+
+function makeEditorLine(text) {
+  const parts=text.split('|'), name=parts[0]||'', detail=parts[1]||'';
+  const wrap=document.createElement('div'); wrap.className='r-line-wrap';
+  const row1=document.createElement('div'); row1.className='r-line';
+  const nameInput=document.createElement('input'); nameInput.className='r-line-input r-line-name'; nameInput.type='text'; nameInput.value=name; nameInput.placeholder='Exercise name';
+  const del=document.createElement('button'); del.className='r-del'; del.textContent='×'; del.onclick=()=>wrap.remove();
+  row1.appendChild(nameInput); row1.appendChild(del);
+  const row2=document.createElement('div'); row2.className='r-line r-line-detail-row';
+  const detailInput=document.createElement('input'); detailInput.className='r-line-input r-line-detail'; detailInput.type='text'; detailInput.value=detail; detailInput.placeholder='Reps / detail (optional)';
+  row2.appendChild(detailInput); wrap.appendChild(row1); wrap.appendChild(row2);
+  return wrap;
+}
+
+function saveAllRoutines() {
+  document.querySelectorAll('.r-lines[data-key]').forEach(linesDiv=>{
+    const key=linesDiv.dataset.key;
+    CONFIG.exercises[key]=Array.from(linesDiv.querySelectorAll('.r-line-wrap')).map(w=>{
+      const name=w.querySelector('.r-line-name').value.trim();
+      const detail=w.querySelector('.r-line-detail').value.trim();
+      return detail?name+'|'+detail:name;
+    }).filter(e=>e);
+    const countEl=document.querySelector(`.r-sets-count[data-key="${key}"]`);
+    if(countEl&&CONFIG.sets&&CONFIG.sets[key]!==undefined){
+      const newCount=parseInt(countEl.textContent);
+      const hasEachLeg=(CONFIG.sets[key]||'').toLowerCase().includes('each leg');
+      CONFIG.sets[key]='Repeat '+newCount+'×'+(hasEachLeg?' each leg':'');
+      const label=document.querySelector('#view-'+key+' .item-group-label');
+      if(label) label.textContent=CONFIG.sets[key].toUpperCase();
+    }
+    rebuildSectionView(key);
+  });
+  downloadFile();
+}
+
+function rebuildSectionView(key) {
+  const exArr=CONFIG.exercises[key]||[];
+  if(key==='warmup'){
+    const ul=document.getElementById('view-warmup');
+    if(ul) ul.innerHTML=exArr.map(e=>{ const[name,detail]=e.split('|'); return `<li>${name}${detail?`<span class="ex-detail">${detail}</span>`:''}</li>`; }).join('');
+  } else if(key==='stretch'){
+    const ul=document.getElementById('view-stretch');
+    if(ul) ul.innerHTML=exArr.map(e=>`<li>${e.replace('|',' — ')}</li>`).join('');
+  } else {
+    const cont=document.getElementById('view-'+key);
+    if(!cont) return;
+    const label=cont.querySelector('.item-group-label');
+    const labelHTML=label?label.outerHTML:'';
+    cont.innerHTML=labelHTML+exArr.map(e=>{ const[name,detail]=e.split('|'); return `<div class="set-row exercise-row"><span class="label">${name}</span>${detail?`<span class="detail">${detail}</span>`:''}</div>`; }).join('');
+  }
+}
+
+// ── Download ──
+function downloadFile() {
+  const src=document.documentElement.outerHTML;
+  const newConfig=`const CONFIG = ${JSON.stringify(CONFIG,null,2)};`;
+  const updated=src.replace(/const CONFIG = \{[\s\S]*?\};/,newConfig);
+  const rootCSS=`:root {
+      --bg: #120810; --surface: #1c1020; --border: #2a2a30; --text: #e8e8ec; --muted: #5a5a6a;
+      --warmup:  ${CONFIG.colors['--warmup']||'#7c3aed'};
+      --glute:   ${CONFIG.colors['--glute']||'#c84bb5'};
+      --back:    ${CONFIG.colors['--back']||'#f01f5a'};
+      --gsculpt: ${CONFIG.colors['--gsculpt']||'#c84bb5'};
+      --core:    ${CONFIG.colors['--core']||'#ff6b8a'};
+      --stretch: ${CONFIG.colors['--stretch']||'#7c3aed'};
+      --c-title: ${CONFIG.colors['--c-title']||'#c84bb5'};
+      --f-title:    ${CONFIG.fonts['--f-title']||"'DM Serif Display',Georgia,serif"};
+      --f-section:  ${CONFIG.fonts['--f-section']||"'DM Serif Display',Georgia,serif"};
+      --f-exercise: ${CONFIG.fonts['--f-exercise']||'Palatino,serif'};
+      --f-meta:     ${CONFIG.fonts['--f-meta']||'Palatino,serif'};
+      --f-done:     ${CONFIG.fonts['--f-done']||"'DM Serif Display',Georgia,serif"};
+      --f-body: 'Inter',-apple-system,sans-serif; --footer-h: 72px;
+    }`;
+  const withCSS=updated.replace(/:root \{[\s\S]*?\}/,rootCSS);
+  const blob=new Blob([withCSS],{type:'text/html'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='sculpt-session.html'; a.click();
+  showToast('Downloaded ✓');
+}
+
+function showToast(msg) {
+  const t=document.createElement('div'); t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; setTimeout(()=>t.remove(),300); },2000);
+}
+
+buildEditor();
+</script>
+</body>
+</html>
